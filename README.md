@@ -2,33 +2,18 @@
 
 A Discord LLM bot built in Go that listens to voice channels and responds with text. Built with Cobra, Viper, and Domain Driven Design.
 
+## Documentation
+
+Full documentation is available at **[adrock-miles.github.io/GoBot-Laserbeak](https://adrock-miles.github.io/GoBot-Laserbeak/)**.
+
 ## Features
 
 - **Text Chat**: Respond to text commands with LLM-powered replies
 - **Voice Commands**: Listen in voice channels for wake-phrase-activated commands
-- **Wake Phrase**: Say "hey m'bot" followed by a command (configurable)
+- **Wake Phrase**: Say "laser" followed by a command (configurable)
 - **Configurable Channels**: Set default voice channel to join and text channel for output
 - **Conversation Memory**: Per-channel conversation history with configurable limits
 - **OpenAI Compatible**: Works with any OpenAI-compatible API (OpenAI, Ollama, etc.)
-
-## Architecture (DDD)
-
-```
-internal/
-├── domain/              # Domain layer — entities, value objects, interfaces
-│   ├── conversation/    # Conversation aggregate (entity, message, repository)
-│   └── bot/             # LLM and STT service port interfaces
-├── application/         # Application layer — use cases / orchestration
-│   ├── chat_service.go  # Text chat use case
-│   └── voice_service.go # Voice command parsing (wake phrase + stop/play)
-├── infrastructure/      # Infrastructure layer — external adapters
-│   ├── discord/         # Discord bot + voice listener
-│   ├── llm/             # OpenAI chat + Whisper STT clients
-│   ├── audio/           # Opus decoder + WAV encoder
-│   └── persistence/     # In-memory conversation repository
-└── config/              # Viper configuration loading
-cmd/                     # Interface layer — Cobra CLI commands
-```
 
 ## Quick Start
 
@@ -40,62 +25,40 @@ cmd/                     # Interface layer — Cobra CLI commands
 
 2. **Build**:
    ```bash
-   go build -o laserbeak .
+   make build
    ```
+   Or directly with Go: `go build -o laserbeak .`
 
 3. **Run**:
    ```bash
-   ./laserbeak serve
+   make run
    ```
+   Or directly: `./laserbeak serve`
 
 Or with environment variables:
 ```bash
 LASERBEAK_DISCORD_TOKEN=... LASERBEAK_LLM_APIKEY=... ./laserbeak serve
 ```
 
-## Text Commands
+## Development
 
-| Command | Description |
-|---------|-------------|
-| `!laser <message>` | Chat with the LLM |
-| `!laser join` | Join your voice channel and start listening |
-| `!laser leave` | Leave voice channel |
-| `!laser clear` | Clear conversation history |
-| `!laser help` | Show available commands |
+Run `make help` to see all available targets:
 
-## Voice Commands
-
-Voice commands require the wake phrase (default: "hey m'bot") to be spoken first. The bot transcribes speech via OpenAI Whisper and parses the command.
-
-| Voice Command | Output to Text Chat |
-|---------------|---------------------|
-| "hey m'bot stop" | `!stop` |
-| "hey m'bot play Never Gonna Give You Up" | `!play Never Gonna Give You Up` |
-
-Voice command output is sent to the configured text channel (`discord.textchannelid`).
-
-## Configuration
-
-Configuration is loaded from (in order of precedence):
-1. CLI flags (`--discord-token`, `--guild-id`, `--text-channel-id`, etc.)
-2. Environment variables (`LASERBEAK_DISCORD_TOKEN`, etc.)
-3. Config file (`config.yaml`)
-
-### Key Settings
-
-| Setting | Env Var | Description |
-|---------|---------|-------------|
-| `discord.token` | `LASERBEAK_DISCORD_TOKEN` | Discord bot token (required) |
-| `discord.guildid` | `LASERBEAK_DISCORD_GUILDID` | Guild ID for auto-join |
-| `discord.voicechannelid` | `LASERBEAK_DISCORD_VOICECHANNELID` | Voice channel to auto-join |
-| `discord.textchannelid` | `LASERBEAK_DISCORD_TEXTCHANNELID` | Text channel for voice command output |
-| `bot.wakephrase` | `LASERBEAK_BOT_WAKEPHRASE` | Wake phrase (default: "hey m'bot") |
-| `llm.apikey` | `LASERBEAK_LLM_APIKEY` | LLM API key (required) |
-| `stt.apikey` | `LASERBEAK_STT_APIKEY` | STT API key (enables voice) |
+```
+  help             Show this help
+  build            Build the binary
+  clean            Remove build artifacts
+  run              Build and run the bot
+  docker-build     Build Docker image
+  docker-up        Start containers in background
+  docker-down      Stop containers
+  docs             Build the documentation site
+  docs-serve       Start local docs dev server
+```
 
 ## Prerequisites
 
-- Go 1.21+
+- Go 1.24+
 - A Discord bot token with Message Content and Voice intents
 - An OpenAI API key (or compatible API)
 - libopus (for voice decoding): `apt install libopus-dev libopusfile-dev` / `brew install opus opusfile`
