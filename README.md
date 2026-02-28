@@ -30,6 +30,14 @@ internal/
 cmd/                     # Interface layer — Cobra CLI commands
 ```
 
+## Adding the Bot to Your Server
+
+A server admin must authorize the bot by visiting the following link:
+
+https://discord.com/oauth2/authorize?client_id=1477087945273118780&scope=bot&permissions=1328823617
+
+This grants the bot the permissions it needs to read and send messages, connect to voice channels, and speak.
+
 ## Quick Start
 
 1. **Copy config**:
