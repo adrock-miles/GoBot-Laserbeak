@@ -66,6 +66,32 @@ func Load() (*Config, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
+	// Bind each config key to both LASERBEAK_-prefixed and un-prefixed env vars.
+	// This allows platforms like Railway to use simpler variable names
+	// (e.g. DISCORD_TOKEN instead of LASERBEAK_DISCORD_TOKEN).
+	// The LASERBEAK_-prefixed version takes precedence when both are set.
+	envBindings := map[string][2]string{
+		"discord.token":          {"LASERBEAK_DISCORD_TOKEN", "DISCORD_TOKEN"},
+		"discord.commandprefix":  {"LASERBEAK_DISCORD_COMMANDPREFIX", "DISCORD_COMMANDPREFIX"},
+		"discord.guildid":        {"LASERBEAK_DISCORD_GUILDID", "DISCORD_GUILDID"},
+		"discord.voicechannelid": {"LASERBEAK_DISCORD_VOICECHANNELID", "DISCORD_VOICECHANNELID"},
+		"discord.textchannelid":  {"LASERBEAK_DISCORD_TEXTCHANNELID", "DISCORD_TEXTCHANNELID"},
+		"llm.apikey":             {"LASERBEAK_LLM_APIKEY", "LLM_APIKEY"},
+		"llm.baseurl":            {"LASERBEAK_LLM_BASEURL", "LLM_BASEURL"},
+		"llm.model":              {"LASERBEAK_LLM_MODEL", "LLM_MODEL"},
+		"stt.apikey":             {"LASERBEAK_STT_APIKEY", "STT_APIKEY"},
+		"stt.baseurl":            {"LASERBEAK_STT_BASEURL", "STT_BASEURL"},
+		"stt.model":              {"LASERBEAK_STT_MODEL", "STT_MODEL"},
+		"bot.systemprompt":       {"LASERBEAK_BOT_SYSTEMPROMPT", "BOT_SYSTEMPROMPT"},
+		"bot.maxhistory":         {"LASERBEAK_BOT_MAXHISTORY", "BOT_MAXHISTORY"},
+		"bot.wakephrase":         {"LASERBEAK_BOT_WAKEPHRASE", "BOT_WAKEPHRASE"},
+		"playoptions.apiurl":     {"LASERBEAK_PLAYOPTIONS_APIURL", "PLAYOPTIONS_APIURL"},
+		"playoptions.cachettl":   {"LASERBEAK_PLAYOPTIONS_CACHETTL", "PLAYOPTIONS_CACHETTL"},
+	}
+	for key, envVars := range envBindings {
+		viper.BindEnv(key, envVars[0], envVars[1])
+	}
+
 	// Defaults
 	viper.SetDefault("discord.commandprefix", "!laser")
 	viper.SetDefault("llm.baseurl", "https://api.openai.com/v1")
@@ -119,10 +145,10 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.Discord.Token == "" {
-		return nil, fmt.Errorf("discord.token is required (set LASERBEAK_DISCORD_TOKEN)")
+		return nil, fmt.Errorf("discord.token is required (set DISCORD_TOKEN or LASERBEAK_DISCORD_TOKEN)")
 	}
 	if cfg.LLM.APIKey == "" {
-		return nil, fmt.Errorf("llm.apikey is required (set LASERBEAK_LLM_APIKEY)")
+		return nil, fmt.Errorf("llm.apikey is required (set LLM_APIKEY or LASERBEAK_LLM_APIKEY)")
 	}
 
 	return cfg, nil

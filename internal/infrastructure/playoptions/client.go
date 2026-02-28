@@ -39,9 +39,9 @@ func NewClient(apiURL string, cacheTTL time.Duration) *Client {
 func (c *Client) Start() {
 	// Initial fetch
 	if err := c.refresh(); err != nil {
-		log.Printf("initial play options fetch failed: %v", err)
+		log.Printf("initial play options fetch failed (url=%s): %v", c.apiURL, err)
 	} else {
-		log.Printf("loaded %d play options", len(c.cache))
+		log.Printf("loaded %d play options from %s", len(c.cache), c.apiURL)
 	}
 
 	go c.refreshLoop()
@@ -63,10 +63,11 @@ func (c *Client) GetOptions(ctx context.Context) ([]bot.PlayOption, error) {
 		if err := c.refresh(); err != nil {
 			// Return stale cache if available
 			if options != nil {
-				log.Printf("play options refresh failed, using stale cache: %v", err)
+				log.Printf("play options refresh failed (url=%s), using stale cache (%d items, age %s): %v",
+					c.apiURL, len(options), time.Since(cacheTime).Truncate(time.Second), err)
 				return options, nil
 			}
-			return nil, err
+			return nil, fmt.Errorf("play options fetch failed (url=%s) and no cached data available: %w", c.apiURL, err)
 		}
 		c.mu.RLock()
 		options = c.cache
@@ -86,7 +87,7 @@ func (c *Client) refreshLoop() {
 			return
 		case <-ticker.C:
 			if err := c.refresh(); err != nil {
-				log.Printf("play options refresh failed: %v", err)
+				log.Printf("play options refresh failed (url=%s): %v", c.apiURL, err)
 			} else {
 				c.mu.RLock()
 				count := len(c.cache)
@@ -108,13 +109,13 @@ func (c *Client) refresh() error {
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("fetch play options: %w", err)
+		return fmt.Errorf("HTTP request to %s failed: %w", c.apiURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("play options API error (status %d): %s", resp.StatusCode, string(body))
+		return fmt.Errorf("play options API returned status %d from %s: %s", resp.StatusCode, c.apiURL, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
