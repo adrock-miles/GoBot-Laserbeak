@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 // STTClient implements bot.STTService using the OpenAI-compatible Whisper API.
@@ -60,7 +62,11 @@ func (c *STTClient) Transcribe(ctx context.Context, audioData []byte) (string, e
 		return "", fmt.Errorf("close multipart writer: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/audio/transcriptions", &buf)
+	endpoint := c.baseURL + "/audio/transcriptions"
+	log.Printf("STT request: audio_size=%d bytes, model=%s, endpoint=%s", len(audioData), c.model, endpoint)
+	start := time.Now()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &buf)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -91,5 +97,6 @@ func (c *STTClient) Transcribe(ctx context.Context, audioData []byte) (string, e
 		return "", fmt.Errorf("STT API error: %s", transResp.Error.Message)
 	}
 
+	log.Printf("STT response: duration=%s, text_length=%d", time.Since(start), len(transResp.Text))
 	return transResp.Text, nil
 }

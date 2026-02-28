@@ -65,23 +65,38 @@ func (s *VoiceService) HandleVoice(ctx context.Context, channelID, userID string
 func (s *VoiceService) parseCommand(ctx context.Context, transcription string) (VoiceCommand, bool) {
 	lower := strings.ToLower(transcription)
 
+	// Normalize common alternate spellings (e.g. "lazer" → "laser")
+	normalized := strings.NewReplacer("lazer", "laser").Replace(lower)
+
 	// Check for wake phrase
-	if !strings.HasPrefix(lower, s.wakePhrase) {
+	if !strings.HasPrefix(normalized, s.wakePhrase) {
 		return VoiceCommand{}, false
 	}
 
 	// Extract everything after the wake phrase
-	rest := strings.TrimSpace(transcription[len(s.wakePhrase):])
+	rest := strings.TrimSpace(normalized[len(s.wakePhrase):])
 	restLower := strings.ToLower(rest)
 
+	// Strip punctuation for command matching (STT may transcribe "Stop!" or "stop.")
+	stripped := strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == ' ' {
+			return r
+		}
+		return -1
+	}, restLower)
+	stripped = strings.TrimSpace(stripped)
+
 	switch {
-	case restLower == "stop":
+	case strings.HasPrefix(stripped, "stop"):
 		return VoiceCommand{Text: "!stop"}, true
 
 	case strings.HasPrefix(restLower, "play"):
 		query := strings.TrimSpace(rest[len("play"):])
 		if query == "" {
 			return VoiceCommand{}, false
+		}
+		if strings.Contains(strings.ToLower(query), "random") {
+			return VoiceCommand{Text: "!pr"}, true
 		}
 		matched := s.matchPlayQuery(ctx, query)
 		return VoiceCommand{Text: "!play " + matched}, true

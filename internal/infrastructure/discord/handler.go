@@ -113,6 +113,7 @@ func (b *Bot) onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) 
 	content = strings.TrimSpace(content)
 
 	if content == "" {
+		b.handleHelp(s, m)
 		return
 	}
 
@@ -187,8 +188,11 @@ func (b *Bot) handleJoinVoice(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 // handleLeaveVoice leaves the voice channel in the current guild.
 func (b *Bot) handleLeaveVoice(s *discordgo.Session, m *discordgo.MessageCreate) {
-	b.voiceListener.Leave(m.GuildID)
-	s.ChannelMessageSend(m.ChannelID, "Left voice channel.")
+	if b.voiceListener.Leave(m.GuildID) {
+		s.ChannelMessageSend(m.ChannelID, "Left voice channel.")
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "I'm not in a voice channel.")
+	}
 }
 
 // handleClear resets conversation history for this channel.
@@ -209,8 +213,8 @@ func (b *Bot) handleHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 		"`%s clear` — Clear conversation history\n"+
 		"`%s help` — Show this help\n\n"+
 		"**Voice Commands** (say in voice chat):\n"+
-		"`hey m'bot stop` — Sends `!stop` to text chat\n"+
-		"`hey m'bot play <query>` — Sends `!play <query>` to text chat",
+		"`laser stop` — Sends `!stop` to text chat\n"+
+		"`laser play <query>` — Sends `!play <query>` to text chat",
 		prefix, prefix, prefix, prefix, prefix)
 	s.ChannelMessageSend(m.ChannelID, help)
 }

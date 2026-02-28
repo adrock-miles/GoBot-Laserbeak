@@ -65,17 +65,20 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if cfg.STT.APIKey != "" {
 		sttClient := llm.NewSTTClient(cfg.STT.APIKey, cfg.STT.BaseURL, cfg.STT.Model)
 
-		// Set up play options matching if API URL is configured
-		var playOpts bot.PlayOptionsService
+		// Build play options sources (local file + optional API)
+		var playOptsSources []bot.PlayOptionsService
+		playOptsSources = append(playOptsSources, playoptions.NewFileSource("play_options.json"))
+
 		var playOptsClient *playoptions.Client
 		if cfg.PlayOptions.APIURL != "" {
 			playOptsClient = playoptions.NewClient(cfg.PlayOptions.APIURL, cfg.PlayOptions.CacheTTL)
 			playOptsClient.Start()
-			playOpts = playOptsClient
+			playOptsSources = append(playOptsSources, playOptsClient)
 			log.Printf("Play options matching enabled (API: %s, cache TTL: %s)",
 				cfg.PlayOptions.APIURL, cfg.PlayOptions.CacheTTL)
 		}
 
+		playOpts := playoptions.NewComposite(playOptsSources...)
 		voiceService := application.NewVoiceService(sttClient, cfg.Bot.WakePhrase, llmClient, playOpts)
 		discordBot.SetVoiceHandler(voiceService.HandleVoice)
 		log.Printf("Voice commands enabled (wake phrase: %q)", cfg.Bot.WakePhrase)

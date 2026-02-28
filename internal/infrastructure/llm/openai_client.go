@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
 )
@@ -69,7 +71,11 @@ func (c *OpenAIClient) ChatCompletion(ctx context.Context, messages []bot.LLMMes
 		return "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(body))
+	endpoint := c.baseURL + "/chat/completions"
+	log.Printf("LLM request: messages=%d, model=%s, endpoint=%s", len(msgs), c.model, endpoint)
+	start := time.Now()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -104,5 +110,7 @@ func (c *OpenAIClient) ChatCompletion(ctx context.Context, messages []bot.LLMMes
 		return "", fmt.Errorf("no choices in response")
 	}
 
-	return chatResp.Choices[0].Message.Content, nil
+	result := chatResp.Choices[0].Message.Content
+	log.Printf("LLM response: duration=%s, length=%d", time.Since(start), len(result))
+	return result, nil
 }

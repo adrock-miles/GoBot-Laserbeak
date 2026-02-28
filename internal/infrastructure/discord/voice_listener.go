@@ -106,16 +106,21 @@ func (vl *VoiceListener) getUserID(ssrc uint32) string {
 	return vl.ssrcToUser[ssrc]
 }
 
-// Leave disconnects from voice in a guild.
-func (vl *VoiceListener) Leave(guildID string) {
+// Leave disconnects from voice in a guild. Returns true if a connection was found and disconnected.
+func (vl *VoiceListener) Leave(guildID string) bool {
 	vl.mu.Lock()
 	defer vl.mu.Unlock()
 
-	if conn, ok := vl.connections[guildID]; ok {
-		conn.cancel()
-		conn.vc.Disconnect()
-		delete(vl.connections, guildID)
+	conn, ok := vl.connections[guildID]
+	if !ok {
+		return false
 	}
+
+	conn.cancel()
+	conn.vc.Disconnect()
+	delete(vl.connections, guildID)
+	log.Printf("Disconnected from voice in guild %s", guildID)
+	return true
 }
 
 // LeaveAll disconnects from all voice channels.
