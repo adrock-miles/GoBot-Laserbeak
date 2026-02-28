@@ -40,7 +40,8 @@ func NewBot(cfg BotConfig) (*Bot, error) {
 		return nil, fmt.Errorf("create discord session: %w", err)
 	}
 
-	s.Identify.Intents = discordgo.IntentsGuildMessages |
+	s.Identify.Intents = discordgo.IntentsGuilds |
+		discordgo.IntentsGuildMessages |
 		discordgo.IntentsGuildVoiceStates |
 		discordgo.IntentsMessageContent
 
@@ -152,17 +153,15 @@ func (b *Bot) onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 // handleJoinVoice joins the voice channel the user is currently in.
 func (b *Bot) handleJoinVoice(s *discordgo.Session, m *discordgo.MessageCreate) {
-	guild, err := s.State.Guild(m.GuildID)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not find guild information.")
-		return
-	}
-
+	// Try cached state first, fall back to REST API if stale
 	var voiceChannelID string
-	for _, vs := range guild.VoiceStates {
-		if vs.UserID == m.Author.ID {
+	vs, err := s.State.VoiceState(m.GuildID, m.Author.ID)
+	if err == nil {
+		voiceChannelID = vs.ChannelID
+	} else {
+		vs, err := s.UserVoiceState(m.GuildID, m.Author.ID)
+		if err == nil {
 			voiceChannelID = vs.ChannelID
-			break
 		}
 	}
 
