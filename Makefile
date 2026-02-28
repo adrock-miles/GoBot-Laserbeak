@@ -2,7 +2,7 @@ BINARY  := laserbeak
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS := -ldflags "-X github.com/adrock-miles/go-laserbeak/cmd.Version=$(VERSION)"
 
-.PHONY: help build clean run docker-build docker-up docker-down docs docs-serve
+.PHONY: help build clean test run docker-build docker-up docker-down docs docs-serve
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -13,6 +13,9 @@ build: ## Build the binary
 
 clean: ## Remove build artifacts
 	rm -f $(BINARY)
+
+test: ## Run tests
+	go test ./... -count=1
 
 run: build ## Build and run the bot
 	./$(BINARY) serve
