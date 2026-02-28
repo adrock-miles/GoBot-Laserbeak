@@ -7,13 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/application"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/config"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/discord"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/llm"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/persistence"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/playoptions"
+	"github.com/adrock-miles/go-laserbeak/internal/application"
+	"github.com/adrock-miles/go-laserbeak/internal/config"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/discord"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/llm"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/persistence"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/playoptions"
 	"github.com/spf13/cobra"
 )
 
@@ -65,17 +65,20 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if cfg.STT.APIKey != "" {
 		sttClient := llm.NewSTTClient(cfg.STT.APIKey, cfg.STT.BaseURL, cfg.STT.Model)
 
-		// Set up play options matching if API URL is configured
-		var playOpts bot.PlayOptionsService
+		// Build play options sources (local file + optional API)
+		var playOptsSources []bot.PlayOptionsService
+		playOptsSources = append(playOptsSources, playoptions.NewFileSource("play_options.json"))
+
 		var playOptsClient *playoptions.Client
 		if cfg.PlayOptions.APIURL != "" {
 			playOptsClient = playoptions.NewClient(cfg.PlayOptions.APIURL, cfg.PlayOptions.CacheTTL)
 			playOptsClient.Start()
-			playOpts = playOptsClient
+			playOptsSources = append(playOptsSources, playOptsClient)
 			log.Printf("Play options matching enabled (API: %s, cache TTL: %s)",
 				cfg.PlayOptions.APIURL, cfg.PlayOptions.CacheTTL)
 		}
 
+		playOpts := playoptions.NewComposite(playOptsSources...)
 		voiceService := application.NewVoiceService(sttClient, cfg.Bot.WakePhrase, llmClient, playOpts)
 		discordBot.SetVoiceHandler(voiceService.HandleVoice)
 		log.Printf("Voice commands enabled (wake phrase: %q)", cfg.Bot.WakePhrase)

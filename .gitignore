@@ -12,6 +12,11 @@ config.yaml
 *.swp
 *.swo
 
+# Docs
+docs/node_modules/
+docs/build/
+docs/.docusaurus/
+
 # OS
 .DS_Store
 Thumbs.db

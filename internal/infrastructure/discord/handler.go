@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -31,6 +32,9 @@ type Bot struct {
 	chatHandler   ChatHandler
 	voiceHandler  VoiceCommandHandler
 	voiceListener *VoiceListener
+
+	seenMu sync.Mutex
+	seenID string // last processed message ID to deduplicate gateway redeliveries
 }
 
 // NewBot creates a new Discord Bot.
@@ -40,7 +44,8 @@ func NewBot(cfg BotConfig) (*Bot, error) {
 		return nil, fmt.Errorf("create discord session: %w", err)
 	}
 
-	s.Identify.Intents = discordgo.IntentsGuildMessages |
+	s.Identify.Intents = discordgo.IntentsGuilds |
+		discordgo.IntentsGuildMessages |
 		discordgo.IntentsGuildVoiceStates |
 		discordgo.IntentsMessageContent
 
@@ -76,20 +81,7 @@ func (b *Bot) Start() error {
 		go b.processVoiceResults()
 	}
 
-	// Auto-join voice channel if configured
-	if b.config.GuildID != "" && b.config.VoiceChannelID != "" {
-		textCh := b.config.TextChannelID
-		if textCh == "" {
-			log.Println("Warning: voice channel configured but no text channel set for output")
-		}
-		if err := b.voiceListener.Join(b.session, b.config.GuildID, b.config.VoiceChannelID, textCh); err != nil {
-			log.Printf("failed to auto-join voice channel: %v", err)
-		} else {
-			log.Printf("Auto-joined voice channel %s", b.config.VoiceChannelID)
-		}
-	}
-
-	log.Println("Bot is online and listening")
+	log.Println("Bot is online and listening. Use the join command to connect to a voice channel.")
 	return nil
 }
 
@@ -109,10 +101,20 @@ func (b *Bot) onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) 
 		return
 	}
 
+	// Deduplicate: gateway reconnects can redeliver the same event
+	b.seenMu.Lock()
+	if m.ID == b.seenID {
+		b.seenMu.Unlock()
+		return
+	}
+	b.seenID = m.ID
+	b.seenMu.Unlock()
+
 	content := strings.TrimPrefix(m.Content, b.config.CommandPrefix)
 	content = strings.TrimSpace(content)
 
 	if content == "" {
+		b.handleHelp(s, m)
 		return
 	}
 
@@ -151,17 +153,15 @@ func (b *Bot) onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 // handleJoinVoice joins the voice channel the user is currently in.
 func (b *Bot) handleJoinVoice(s *discordgo.Session, m *discordgo.MessageCreate) {
-	guild, err := s.State.Guild(m.GuildID)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not find guild information.")
-		return
-	}
-
+	// Try cached state first, fall back to REST API if stale
 	var voiceChannelID string
-	for _, vs := range guild.VoiceStates {
-		if vs.UserID == m.Author.ID {
+	vs, err := s.State.VoiceState(m.GuildID, m.Author.ID)
+	if err == nil {
+		voiceChannelID = vs.ChannelID
+	} else {
+		vs, err := s.UserVoiceState(m.GuildID, m.Author.ID)
+		if err == nil {
 			voiceChannelID = vs.ChannelID
-			break
 		}
 	}
 
@@ -187,8 +187,18 @@ func (b *Bot) handleJoinVoice(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 // handleLeaveVoice leaves the voice channel in the current guild.
 func (b *Bot) handleLeaveVoice(s *discordgo.Session, m *discordgo.MessageCreate) {
-	b.voiceListener.Leave(m.GuildID)
-	s.ChannelMessageSend(m.ChannelID, "Left voice channel.")
+	// Try both the message's guild ID and the configured guild ID,
+	// since they may differ if guild state is stale after a reconnect.
+	left := b.voiceListener.Leave(m.GuildID)
+	if !left && b.config.GuildID != "" && b.config.GuildID != m.GuildID {
+		left = b.voiceListener.Leave(b.config.GuildID)
+	}
+
+	if left {
+		s.ChannelMessageSend(m.ChannelID, "Left voice channel.")
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "I'm not in a voice channel.")
+	}
 }
 
 // handleClear resets conversation history for this channel.
@@ -209,8 +219,8 @@ func (b *Bot) handleHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 		"`%s clear` — Clear conversation history\n"+
 		"`%s help` — Show this help\n\n"+
 		"**Voice Commands** (say in voice chat):\n"+
-		"`hey m'bot stop` — Sends `!stop` to text chat\n"+
-		"`hey m'bot play <query>` — Sends `!play <query>` to text chat",
+		"`laser stop` — Sends `!stop` to text chat\n"+
+		"`laser play <query>` — Sends `!play <query>` to text chat",
 		prefix, prefix, prefix, prefix, prefix)
 	s.ChannelMessageSend(m.ChannelID, help)
 }

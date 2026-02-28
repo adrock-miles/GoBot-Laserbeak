@@ -14,7 +14,7 @@ var rootCmd = &cobra.Command{
 	Long: `Laserbeak is a Discord bot built in Go that:
   - Responds to text commands with LLM-powered replies
   - Joins voice channels to listen for voice commands
-  - Recognizes "hey m'bot" wake phrase for stop/play commands
+  - Recognizes "laser" wake phrase for stop/play commands
   - Sends command output as text messages in a configurable Discord channel`,
 }
 

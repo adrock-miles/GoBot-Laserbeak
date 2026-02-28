@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
 )
 
 // VoiceCommand represents a parsed voice command result.
@@ -60,34 +60,62 @@ func (s *VoiceService) HandleVoice(ctx context.Context, channelID, userID string
 	return cmd.Text, nil
 }
 
-// parseCommand checks if the transcription starts with the wake phrase
-// and parses the subsequent command.
+// parseCommand checks if the transcription contains the wake phrase
+// (optionally preceded by filler words like "hey", "yo") and parses the subsequent command.
 func (s *VoiceService) parseCommand(ctx context.Context, transcription string) (VoiceCommand, bool) {
 	lower := strings.ToLower(transcription)
 
-	// Check for wake phrase
-	if !strings.HasPrefix(lower, s.wakePhrase) {
+	// Normalize common alternate spellings (e.g. "lazer" → "laser")
+	normalized := strings.NewReplacer("lazer", "laser").Replace(lower)
+
+	// Find wake phrase as a whole word, allowing up to 2 filler words before it
+	rest, found := s.extractAfterWakePhrase(normalized)
+	if !found {
 		return VoiceCommand{}, false
 	}
 
-	// Extract everything after the wake phrase
-	rest := strings.TrimSpace(transcription[len(s.wakePhrase):])
-	restLower := strings.ToLower(rest)
+	// Strip punctuation for command matching (STT may transcribe "Stop!" or "stop.")
+	stripped := strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == ' ' {
+			return r
+		}
+		return -1
+	}, rest)
+	stripped = strings.TrimSpace(stripped)
 
 	switch {
-	case restLower == "stop":
+	case strings.HasPrefix(stripped, "stop"):
 		return VoiceCommand{Text: "!stop"}, true
 
-	case strings.HasPrefix(restLower, "play"):
-		query := strings.TrimSpace(rest[len("play"):])
+	case strings.HasPrefix(stripped, "play"):
+		query := strings.TrimSpace(stripped[len("play"):])
 		if query == "" {
 			return VoiceCommand{}, false
+		}
+		if strings.Contains(query, "random") {
+			return VoiceCommand{Text: "!pr"}, true
 		}
 		matched := s.matchPlayQuery(ctx, query)
 		return VoiceCommand{Text: "!play " + matched}, true
 	}
 
 	return VoiceCommand{}, false
+}
+
+// extractAfterWakePhrase finds the wake phrase in the text and returns everything
+// after it. Allows up to 2 filler words before the wake phrase (e.g. "hey laser",
+// "yo laser"). The wake phrase must appear as a whole word — "blazer" won't match "laser".
+func (s *VoiceService) extractAfterWakePhrase(text string) (string, bool) {
+	words := strings.Fields(text)
+	for i, word := range words {
+		if word == s.wakePhrase {
+			if i > 2 {
+				return "", false
+			}
+			return strings.Join(words[i+1:], " "), true
+		}
+	}
+	return "", false
 }
 
 // matchPlayQuery tries to match a spoken query against the available play options
