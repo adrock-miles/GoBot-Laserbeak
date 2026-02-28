@@ -77,8 +77,17 @@ func (s *VoiceService) parseCommand(ctx context.Context, transcription string) (
 	rest := strings.TrimSpace(normalized[len(s.wakePhrase):])
 	restLower := strings.ToLower(rest)
 
+	// Strip punctuation for command matching (STT may transcribe "Stop!" or "stop.")
+	stripped := strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == ' ' {
+			return r
+		}
+		return -1
+	}, restLower)
+	stripped = strings.TrimSpace(stripped)
+
 	switch {
-	case restLower == "stop":
+	case strings.HasPrefix(stripped, "stop"):
 		return VoiceCommand{Text: "!stop"}, true
 
 	case strings.HasPrefix(restLower, "play"):
