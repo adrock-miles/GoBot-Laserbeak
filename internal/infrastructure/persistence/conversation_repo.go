@@ -3,7 +3,7 @@ package persistence
 import (
 	"sync"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/conversation"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/conversation"
 )
 
 // InMemoryConversationRepo implements conversation.Repository with an in-memory store.

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/audio"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/audio"
 	"github.com/bwmarrin/discordgo"
 )
 

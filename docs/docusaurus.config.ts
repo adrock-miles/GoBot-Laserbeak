@@ -8,10 +8,10 @@ const config: Config = {
   favicon: "img/favicon.ico",
 
   url: "https://adrock-miles.github.io",
-  baseUrl: "/GoBot-Laserbeak/",
+  baseUrl: "/go-laserbeak/",
 
   organizationName: "adrock-miles",
-  projectName: "GoBot-Laserbeak",
+  projectName: "go-laserbeak",
 
   onBrokenLinks: "throw",
 
@@ -53,7 +53,7 @@ const config: Config = {
           label: "Docs",
         },
         {
-          href: "https://github.com/adrock-miles/GoBot-Laserbeak",
+          href: "https://github.com/adrock-miles/go-laserbeak",
           label: "GitHub",
           position: "right",
         },
@@ -74,7 +74,7 @@ const config: Config = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/adrock-miles/GoBot-Laserbeak",
+              href: "https://github.com/adrock-miles/go-laserbeak",
             },
           ],
         },

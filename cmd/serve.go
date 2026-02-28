@@ -7,13 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/application"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/config"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/discord"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/llm"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/persistence"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/infrastructure/playoptions"
+	"github.com/adrock-miles/go-laserbeak/internal/application"
+	"github.com/adrock-miles/go-laserbeak/internal/config"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/discord"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/llm"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/persistence"
+	"github.com/adrock-miles/go-laserbeak/internal/infrastructure/playoptions"
 	"github.com/spf13/cobra"
 )
 

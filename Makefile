@@ -1,6 +1,6 @@
 BINARY  := laserbeak
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-LDFLAGS := -ldflags "-X github.com/adrock-miles/GoBot-Laserbeak/cmd.Version=$(VERSION)"
+LDFLAGS := -ldflags "-X github.com/adrock-miles/go-laserbeak/cmd.Version=$(VERSION)"
 
 .PHONY: help build clean run docker-build docker-up docker-down docs docs-serve
 

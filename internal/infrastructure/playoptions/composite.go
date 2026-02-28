@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
 )
 
 // Composite merges play options from multiple sources into a single PlayOptionsService.

@@ -7,8 +7,8 @@ sidebar_position: 2
 ## Clone the repository
 
 ```bash
-git clone https://github.com/adrock-miles/GoBot-Laserbeak.git
-cd GoBot-Laserbeak
+git clone https://github.com/adrock-miles/go-laserbeak.git
+cd go-laserbeak
 ```
 
 ## Build

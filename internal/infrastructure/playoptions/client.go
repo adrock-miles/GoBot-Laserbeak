@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
 )
 
 // Client fetches play options from an external bot's HTTP API and caches them.

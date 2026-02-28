@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
 )
 
 // OpenAIClient implements bot.LLMService using the OpenAI-compatible chat completions API.

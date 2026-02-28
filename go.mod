@@ -1,4 +1,4 @@
-module github.com/adrock-miles/GoBot-Laserbeak
+module github.com/adrock-miles/go-laserbeak
 
 go 1.24.7
 

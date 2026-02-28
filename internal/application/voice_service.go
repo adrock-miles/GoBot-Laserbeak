@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
 )
 
 // VoiceCommand represents a parsed voice command result.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/bot"
-	"github.com/adrock-miles/GoBot-Laserbeak/internal/domain/conversation"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/bot"
+	"github.com/adrock-miles/go-laserbeak/internal/domain/conversation"
 )
 
 // ChatService is the application service that orchestrates text-based conversations.

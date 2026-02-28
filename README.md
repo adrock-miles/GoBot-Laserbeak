@@ -1,10 +1,10 @@
-# GoBot-Laserbeak
+# go-laserbeak
 
 A Discord LLM bot built in Go that listens to voice channels and responds with text. Built with Cobra, Viper, and Domain Driven Design.
 
 ## Documentation
 
-Full documentation is available at **[adrock-miles.github.io/GoBot-Laserbeak](https://adrock-miles.github.io/GoBot-Laserbeak/)**.
+Full documentation is available at **[adrock-miles.github.io/go-laserbeak](https://adrock-miles.github.io/go-laserbeak/)**.
 
 ## Features
 
