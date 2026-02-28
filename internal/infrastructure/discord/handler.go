@@ -113,6 +113,7 @@ func (b *Bot) onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) 
 	content = strings.TrimSpace(content)
 
 	if content == "" {
+		b.handleHelp(s, m)
 		return
 	}
 
